@@ -25,9 +25,9 @@ def main():
     # Filtering options
     parser.add_argument('--lddt-threshold', type=float, default=0.6,
                         help='Minimum lddt value for filtering')
-    parser.add_argument('--max-holo-resolution', type=float, default=3.0,
+    parser.add_argument('--max-holo-resolution', type=float, default=4.5,
                         help='Maximum holo resolution (Angstroms)')
-    parser.add_argument('--max-apo-resolution', type=float, default=3.0,
+    parser.add_argument('--max-apo-resolution', type=float, default=4.5,
                         help='Maximum apo resolution (Angstroms)')
     parser.add_argument('--min-rmsd', type=float, default=1.5,
                         help='Minimum RMSD threshold - at least one of 3 RMSDs must exceed this')

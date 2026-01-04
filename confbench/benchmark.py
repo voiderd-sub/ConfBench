@@ -153,8 +153,8 @@ class ConfBenchmark:
         self,
         output_csv: str,
         lddt_threshold: Optional[float] = 0.6,
-        max_holo_resolution: Optional[float] = 3.0,
-        max_apo_resolution: Optional[float] = 3.0,
+        max_holo_resolution: Optional[float] = 4.5,
+        max_apo_resolution: Optional[float] = 4.5,
         min_rmsd: Optional[float] = 1.5,
         n_pairs: Optional[int] = None,
         n_workers: int = 1
