@@ -17,13 +17,13 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # ===== Configuration (will be set via arguments) =====
-PLINDER_BASE = None
-SYSTEMS_DIR = None
-LINKED_STRUCTURES_DIR = None
-LINKS_FILE = None
-POCKET_DISTANCE_CUTOFF = None
-OUTPUT_DIR = None
-ANNOTATION_TABLE = None
+PLINDER_BASE: str = ""
+SYSTEMS_DIR: str = ""
+LINKED_STRUCTURES_DIR: str = ""
+LINKS_FILE: str = ""
+POCKET_DISTANCE_CUTOFF: float = 0.0
+OUTPUT_DIR: str = ""
+ANNOTATION_TABLE: str = ""
 
 # ===== Resolution lookup (will be populated at runtime) =====
 PDB_RESOLUTION_MAP = {}  # pdb_id -> resolution

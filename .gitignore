@@ -1,3 +1,4 @@
 results
 *.sh
 __pycache__
+tmp/

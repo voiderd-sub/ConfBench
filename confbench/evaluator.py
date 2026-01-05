@@ -5,7 +5,7 @@ Evaluates predicted structures against ground truth.
 """
 import os
 import glob
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from .utils import (
     parse_holo_id,
     calculate_pairwise_rmsds,
@@ -36,8 +36,9 @@ class Evaluator:
         holo_path: str,
         apo_path: str,
         ligand_files: List[str],
-        holo_id: Optional[str] = None
-    ) -> Dict[str, Optional[float]]:
+        holo_id: Optional[str] = None,
+        prediction_target: str = 'holo'
+    ) -> Dict[str, Union[float, str, None]]:
         """
         Calculate ConfBench scores for a single prediction.
         
@@ -47,6 +48,7 @@ class Evaluator:
             apo_path: Path to apo structure
             ligand_files: List of ligand file paths (.sdf)
             holo_id: Optional holo ID for extracting chain information
+            prediction_target: 'holo' or 'apo' - what the model is trying to predict
             
         Returns:
             Dictionary with scores and intermediate RMSD values:
@@ -132,19 +134,22 @@ class Evaluator:
         results['global_score'] = calculate_confbench_score(
             rmsds['rmsd_pred_apo_global'],
             rmsds['rmsd_pred_holo_global'],
-            rmsds['rmsd_apo_holo_global']
+            rmsds['rmsd_apo_holo_global'],
+            prediction_target=prediction_target
         )
         
         results['pocket_ca_score'] = calculate_confbench_score(
             rmsds['rmsd_pred_apo_pocket_ca'],
             rmsds['rmsd_pred_holo_pocket_ca'],
-            rmsds['rmsd_apo_holo_pocket_ca']
+            rmsds['rmsd_apo_holo_pocket_ca'],
+            prediction_target=prediction_target
         )
         
         results['pocket_all_score'] = calculate_confbench_score(
             rmsds['rmsd_pred_apo_pocket_all'],
             rmsds['rmsd_pred_holo_pocket_all'],
-            rmsds['rmsd_apo_holo_pocket_all']
+            rmsds['rmsd_apo_holo_pocket_all'],
+            prediction_target=prediction_target
         )
         
         # Check if scores were calculated successfully

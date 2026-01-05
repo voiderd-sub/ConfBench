@@ -25,7 +25,8 @@ class ConfBenchmark:
         self,
         confbench_data_dir: str,
         predictions_dir: str,
-        pocket_distance_cutoff: float = 10.0
+        pocket_distance_cutoff: float = 10.0,
+        prediction_target: str = 'holo'
     ):
         """
         Initialize the benchmark.
@@ -34,10 +35,12 @@ class ConfBenchmark:
             confbench_data_dir: Path to confbench_data directory created by prepare_confbench_data.py
             predictions_dir: Path to directory containing predicted structures
             pocket_distance_cutoff: Distance cutoff for pocket definition (Angstroms)
+            prediction_target: 'holo' or 'apo' - what the model is predicting
         """
         self.data_dir = confbench_data_dir
         self.predictions_dir = predictions_dir
         self.pocket_distance_cutoff = pocket_distance_cutoff
+        self.prediction_target = prediction_target
         self.evaluator = Evaluator(pocket_distance_cutoff)
         
         # Load metadata
@@ -52,7 +55,8 @@ class ConfBenchmark:
         lddt_threshold: Optional[float] = None,
         max_holo_resolution: Optional[float] = None,
         max_apo_resolution: Optional[float] = None,
-        min_rmsd: Optional[float] = None
+        min_rmsd: Optional[float] = None,
+        filter_crystal_contacts: bool = False
     ) -> pd.DataFrame:
         """
         Apply filtering conditions to metadata.
@@ -62,6 +66,7 @@ class ConfBenchmark:
             max_holo_resolution: Maximum holo resolution (default: None, no filter)
             max_apo_resolution: Maximum apo resolution (default: None, no filter)
             min_rmsd: Minimum RMSD threshold - at least one of 3 RMSDs must exceed this (default: None)
+            filter_crystal_contacts: If True, filter out systems with crystal contacts (default: False)
             
         Returns:
             Filtered DataFrame
@@ -88,6 +93,16 @@ class ConfBenchmark:
                 (df['pocket_all_rmsd'] > min_rmsd)
             )
             df = df[mask]
+        
+        if filter_crystal_contacts:
+            col_name = 'system_num_atoms_with_crystal_contacts'
+            if col_name in df.columns:
+                before_count = len(df)
+                df = df[df[col_name] == 0]
+                after_count = len(df)
+                print(f"Crystal contact filter: {before_count} -> {after_count} ({before_count - after_count} removed)")
+            else:
+                print(f"Warning: Column '{col_name}' not found in metadata. Crystal contact filter skipped.")
         
         return df.reset_index(drop=True)
     
@@ -127,11 +142,17 @@ class ConfBenchmark:
         if not ligand_files:
             return {'holo_id': holo_id, 'apo_id': apo_id, 'status': 'error', 'message': 'No ligands'}
         
-        # Find prediction file
-        pred_path = self.evaluator.find_prediction_file(self.predictions_dir, holo_id)
+        # Find prediction file based on prediction_target
+        if self.prediction_target == 'holo':
+            # Model predicts holo: prediction files named by holo_id
+            pred_path = self.evaluator.find_prediction_file(self.predictions_dir, holo_id)
+        else:
+            # Model predicts apo: prediction files named by apo_id
+            pred_path = self.evaluator.find_prediction_file(self.predictions_dir, apo_id)
         
         if pred_path is None:
-            return {'holo_id': holo_id, 'apo_id': apo_id, 'status': 'error', 'message': 'Prediction not found'}
+            search_id = holo_id if self.prediction_target == 'holo' else apo_id
+            return {'holo_id': holo_id, 'apo_id': apo_id, 'status': 'error', 'message': f'Prediction not found ({search_id})'}
         
         # Calculate scores
         try:
@@ -140,7 +161,8 @@ class ConfBenchmark:
                 holo_path=holo_path,
                 apo_path=apo_path,
                 ligand_files=ligand_files,
-                holo_id=holo_id
+                holo_id=holo_id,
+                prediction_target=self.prediction_target
             )
             results['holo_id'] = holo_id
             results['apo_id'] = apo_id
@@ -156,6 +178,7 @@ class ConfBenchmark:
         max_holo_resolution: Optional[float] = 4.5,
         max_apo_resolution: Optional[float] = 4.5,
         min_rmsd: Optional[float] = 1.5,
+        filter_crystal_contacts: bool = False,
         n_pairs: Optional[int] = None,
         n_workers: int = 1
     ) -> pd.DataFrame:
@@ -165,9 +188,10 @@ class ConfBenchmark:
         Args:
             output_csv: Path to save results CSV
             lddt_threshold: Minimum lddt value (default: 0.6)
-            max_holo_resolution: Maximum holo resolution (default: 3.0)
-            max_apo_resolution: Maximum apo resolution (default: 3.0)
+            max_holo_resolution: Maximum holo resolution (default: 4.5)
+            max_apo_resolution: Maximum apo resolution (default: 4.5)
             min_rmsd: Minimum RMSD threshold (default: 1.5)
+            filter_crystal_contacts: If True, filter out systems with crystal contacts (default: False)
             n_pairs: Optional limit on number of pairs to evaluate
             n_workers: Number of parallel workers (default: 1)
             
@@ -179,7 +203,8 @@ class ConfBenchmark:
             lddt_threshold=lddt_threshold,
             max_holo_resolution=max_holo_resolution,
             max_apo_resolution=max_apo_resolution,
-            min_rmsd=min_rmsd
+            min_rmsd=min_rmsd,
+            filter_crystal_contacts=filter_crystal_contacts
         )
         
         print(f"Total pairs in metadata: {len(self.metadata)}")

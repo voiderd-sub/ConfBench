@@ -471,14 +471,21 @@ def calculate_pairwise_rmsds(
 
 
 def calculate_confbench_score(
-    rmsd_pred_apo: float,
-    rmsd_pred_holo: float,
-    rmsd_apo_holo: float
+    rmsd_pred_apo: Optional[float],
+    rmsd_pred_holo: Optional[float],
+    rmsd_apo_holo: Optional[float],
+    prediction_target: str = 'holo'
 ) -> Optional[float]:
     """
     Calculate ConfBench score.
     
-    Score = (RMSD(Pred, Apo) - RMSD(Pred, Holo)) / sqrt(0.5 * (RMSD_pa^2 + RMSD_ph^2 + RMSD_ah^2))
+    For prediction_target='holo' (model predicts holo structure):
+        Score = (RMSD(Pred, Apo) - RMSD(Pred, Holo)) / normalization
+        Higher score = closer to holo (good)
+    
+    For prediction_target='apo' (model predicts apo structure):
+        Score = (RMSD(Pred, Holo) - RMSD(Pred, Apo)) / normalization
+        Higher score = closer to apo (good)
     
     Returns:
         Score value, or None if calculation fails
@@ -491,5 +498,11 @@ def calculate_confbench_score(
     if denominator == 0:
         return None
     
-    score = (rmsd_pred_apo - rmsd_pred_holo) / denominator
+    if prediction_target == 'holo':
+        # Model predicts holo: higher score = closer to holo
+        score = (rmsd_pred_apo - rmsd_pred_holo) / denominator
+    else:  # prediction_target == 'apo'
+        # Model predicts apo: higher score = closer to apo
+        score = (rmsd_pred_holo - rmsd_pred_apo) / denominator
+    
     return score

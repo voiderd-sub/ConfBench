@@ -31,10 +31,14 @@ def main():
                         help='Maximum apo resolution (Angstroms)')
     parser.add_argument('--min-rmsd', type=float, default=1.5,
                         help='Minimum RMSD threshold - at least one of 3 RMSDs must exceed this')
+    parser.add_argument('--filter-crystal-contacts', action='store_true',
+                        help='Filter out systems with crystal contacts (system_num_atoms_with_crystal_contacts >= 1)')
     
     # Other options
     parser.add_argument('--pocket-distance-cutoff', type=float, default=10.0,
                         help='Distance cutoff for pocket definition (Angstroms)')
+    parser.add_argument('--prediction-target', type=str, default='holo', choices=['holo', 'apo'],
+                        help='What structure the model predicts: holo or apo (default: holo)')
     parser.add_argument('--n-pairs', type=int, default=None,
                         help='Optional: limit number of pairs to evaluate')
     parser.add_argument('--n-workers', type=int, default=1,
@@ -55,6 +59,7 @@ def main():
     max_holo_resolution = None if args.no_resolution_filter else args.max_holo_resolution
     max_apo_resolution = None if args.no_resolution_filter else args.max_apo_resolution
     min_rmsd = None if args.no_rmsd_filter else args.min_rmsd
+    filter_crystal_contacts = args.filter_crystal_contacts
     
     print("=" * 60)
     print("ConfBench Benchmark")
@@ -67,7 +72,9 @@ def main():
     print(f"  max holo resolution: {max_holo_resolution}")
     print(f"  max apo resolution: {max_apo_resolution}")
     print(f"  min RMSD: {min_rmsd}")
-    print(f"\nPocket distance cutoff: {args.pocket_distance_cutoff}")
+    print(f"  filter crystal contacts: {filter_crystal_contacts}")
+    print(f"\nPrediction target: {args.prediction_target}")
+    print(f"Pocket distance cutoff: {args.pocket_distance_cutoff}")
     print(f"Number of workers: {args.n_workers}")
     print("=" * 60)
     
@@ -75,7 +82,8 @@ def main():
     benchmark = ConfBenchmark(
         confbench_data_dir=args.confbench_data,
         predictions_dir=args.predictions_dir,
-        pocket_distance_cutoff=args.pocket_distance_cutoff
+        pocket_distance_cutoff=args.pocket_distance_cutoff,
+        prediction_target=args.prediction_target
     )
     
     # Run benchmark
@@ -85,6 +93,7 @@ def main():
         max_holo_resolution=max_holo_resolution,
         max_apo_resolution=max_apo_resolution,
         min_rmsd=min_rmsd,
+        filter_crystal_contacts=filter_crystal_contacts,
         n_pairs=args.n_pairs,
         n_workers=args.n_workers
     )

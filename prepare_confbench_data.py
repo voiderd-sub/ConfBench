@@ -72,6 +72,8 @@ def main():
                         help='Path to PLINDER systems directory')
     parser.add_argument('--linked-structures-dir', type=str, required=True,
                         help='Path to linked_structures directory')
+    parser.add_argument('--annotation-table', type=str, required=True,
+                        help='Path to annotation_table.parquet (for crystal contact info)')
     parser.add_argument('--output-dir', type=str, required=True,
                         help='Output directory for confbench_data')
     parser.add_argument('--n-pairs', type=int, default=None,
@@ -102,6 +104,22 @@ def main():
         how='left'
     )
     print(f"Merged with lddt: {rmsd_df['lddt'].notna().sum()} pairs have lddt values")
+    
+    # Load crystal contact info from annotation table
+    print(f"\nLoading crystal contact info from {args.annotation_table}...")
+    ann_df = pq.read_table(
+        args.annotation_table,
+        columns=['system_id', 'system_num_atoms_with_crystal_contacts']
+    ).to_pandas()
+    
+    # Merge crystal contact info
+    rmsd_df = rmsd_df.merge(
+        ann_df.rename(columns={'system_id': 'holo_id'}),
+        on='holo_id',
+        how='left'
+    )
+    crystal_col = 'system_num_atoms_with_crystal_contacts'
+    print(f"Merged with crystal contacts: {rmsd_df[crystal_col].notna().sum()} pairs have values")
     
     # Limit if requested
     if args.n_pairs is not None:
@@ -169,6 +187,7 @@ def main():
             'lddt': row.get('lddt'),
             'bb_lddt': row.get('bb_lddt'),
             'pocket_fident': row.get('pocket_fident'),
+            'system_num_atoms_with_crystal_contacts': row.get('system_num_atoms_with_crystal_contacts'),
         })
     
     # Save metadata
