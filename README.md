@@ -2,7 +2,7 @@
 
 **ConfBench** evaluates how well structure prediction models can predict conformational changes between apo and holo structures.
 
-> **Note**: This implementation is a modified version of ConfBench proposed in [NeuralPlexer3](https://arxiv.org/abs/2412.10743).
+> **Note**: This implementation is a reproduced version of ConfBench proposed in [NeuralPlexer3](https://arxiv.org/abs/2412.10743).
 > Additional filters: **resolution-based filter**, **lddt-based filter**, **crystal contact filter**
 
 ---
